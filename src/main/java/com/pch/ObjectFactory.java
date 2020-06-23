@@ -9,37 +9,29 @@ import java.util.Map;
 
 class ObjectFactory {
 
-    private static ObjectFactory instance = new ObjectFactory();
     private Config config;
     private List<ObjectConfigurator> configurators = new ArrayList<>();
-    private Map<Class, Class> map = new HashMap<>();
+    private ApplicationContext context;
 
     @SneakyThrows
-    private ObjectFactory() {
+    public ObjectFactory(ApplicationContext context) {
+        Map<Class, Class> map = new HashMap<>();
         map.put(Policeman.class, PolicemanImpl.class);
         config = new JavaConfig("com.pch", map);
+        this.context = context;
         for (Class<? extends ObjectConfigurator> aClass : config.getScanner().getSubTypesOf(ObjectConfigurator.class)) {
             configurators.add(aClass.getDeclaredConstructor().newInstance());
         }
     }
 
-    public static ObjectFactory getInstance() {
-        return instance;
-    }
-
     @SneakyThrows
-    public <T> T createObject(Class<T> type) {
-
-        Class<? extends T> implClass = type;
-        if (type.isInterface()) {
-            implClass = config.getImplClass(type);
-        }
+    public <T> T createObject(Class<T> implClass) {
 
         T t = implClass.getDeclaredConstructor().newInstance();
 
         //
-        configurators.forEach(configurator -> configurator.configure(t));
-        
+        configurators.forEach(configurator -> configurator.configure(t, context));
+
         return t;
     }
 }

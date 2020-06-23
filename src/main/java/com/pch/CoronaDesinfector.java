@@ -2,8 +2,10 @@ package com.pch;
 
 public class CoronaDesinfector {
 
-    private static Announcer announcer = ObjectFactory.getInstance().createObject(Announcer.class);
-    private static Policeman policeman = ObjectFactory.getInstance().createObject(Policeman.class);
+    @InjectByType
+    private static Announcer announcer;
+    @InjectByType
+    private static Policeman policeman;
 
     public void start(Room room) {
         //todo оголошення про провітрювання кімнати
