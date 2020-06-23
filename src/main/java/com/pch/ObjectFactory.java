@@ -2,24 +2,25 @@ package com.pch;
 
 import lombok.SneakyThrows;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toMap;
 
 class ObjectFactory {
 
     private static ObjectFactory instance = new ObjectFactory();
     private Config config;
+    private List<ObjectConfigurator> configurators = new ArrayList<>();
+    private Map<Class, Class> map = new HashMap<>();
 
+    @SneakyThrows
     private ObjectFactory() {
-        Map<Class, Class> map = new HashMap<>();
         map.put(Policeman.class, PolicemanImpl.class);
         config = new JavaConfig("com.pch", map);
+        for (Class<? extends ObjectConfigurator> aClass : config.getScanner().getSubTypesOf(ObjectConfigurator.class)) {
+            configurators.add(aClass.getDeclaredConstructor().newInstance());
+        }
     }
 
     public static ObjectFactory getInstance() {
@@ -37,20 +38,8 @@ class ObjectFactory {
         T t = implClass.getDeclaredConstructor().newInstance();
 
         //
-
-        String path = ClassLoader.getSystemClassLoader().getResource("application.properties").getPath();
-        Stream<String> lines = new BufferedReader(new FileReader(path)).lines();
-        Map<String, String> map = lines.map(line -> line.split("=")).collect(toMap(arr -> arr[0], arr -> arr[1]));
-
-        for (Field field : implClass.getDeclaredFields()) {
-            InjectProperty annotation = field.getAnnotation(InjectProperty.class);
-            if (annotation != null) {
-                String value = annotation.value().isEmpty() ? map.get(field.getName()) : map.get(annotation.value());
-                field.setAccessible(true);
-                field.set(t, value);
-            }
-        }
-
+        configurators.forEach(configurator -> configurator.configure(t));
+        
         return t;
     }
 }
