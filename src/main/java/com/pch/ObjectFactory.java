@@ -2,10 +2,9 @@ package com.pch;
 
 import lombok.SneakyThrows;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.PostConstruct;
+import java.lang.reflect.Method;
+import java.util.*;
 
 class ObjectFactory {
 
@@ -15,23 +14,42 @@ class ObjectFactory {
 
     @SneakyThrows
     public ObjectFactory(ApplicationContext context) {
-        Map<Class, Class> map = new HashMap<>();
-        map.put(Policeman.class, PolicemanImpl.class);
-        config = new JavaConfig("com.pch", map);
         this.context = context;
-        for (Class<? extends ObjectConfigurator> aClass : config.getScanner().getSubTypesOf(ObjectConfigurator.class)) {
+        Set<Class<? extends ObjectConfigurator>> classes = context.getConfig().getScanner().getSubTypesOf(ObjectConfigurator.class);
+        for (Class<? extends ObjectConfigurator> aClass : classes) {
             configurators.add(aClass.getDeclaredConstructor().newInstance());
         }
     }
 
-    @SneakyThrows
+
     public <T> T createObject(Class<T> implClass) {
 
-        T t = implClass.getDeclaredConstructor().newInstance();
+        T t = create(implClass);
 
-        //
-        configurators.forEach(configurator -> configurator.configure(t, context));
+        configure(t);
+
+        invokeInit(implClass, t);
+
 
         return t;
+    }
+
+    @SneakyThrows
+    private <T> void invokeInit(Class<T> implClass, T t) {
+        for (Method method : implClass.getMethods()) {
+            if (method.isAnnotationPresent(PostConstruct.class)) {
+                method.invoke(t);
+            }
+        }
+
+    }
+
+    @SneakyThrows
+    private <T> T create(Class<T> implClass) {
+        return implClass.getDeclaredConstructor().newInstance();
+    }
+
+    private <T> void configure(T t) {
+        configurators.forEach(configurator -> configurator.configure(t, context));
     }
 }

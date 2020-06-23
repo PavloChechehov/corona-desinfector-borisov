@@ -1,5 +1,6 @@
 package com.pch;
 
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Map;
@@ -9,6 +10,7 @@ public class ApplicationContext {
     @Setter
     private ObjectFactory factory;
     private Map<Class, Object> cache = new ConcurrentHashMap<>();
+    @Getter
     private Config config;
 
     public ApplicationContext(Config config) {
