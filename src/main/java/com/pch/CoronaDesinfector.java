@@ -13,11 +13,11 @@ public class CoronaDesinfector {
         //todo в кімнату можна вертатися
         announcer.annonce("Всім можна заходити в кімнату, якщо не боїтесь за своє здоровя)");
 
-        desinfaction(room);
+        disinfect(room);
 
     }
 
-    private static void desinfaction(Room room) {
+    private static void disinfect(Room room) {
         System.out.println("room " + room + " вже чиста!!!");
     }
 }
