@@ -1,6 +1,7 @@
 package com.pch;
 
 @Singleton
+@Deprecated
 public class RecommendatorImpl implements Recommendator {
 
     @InjectProperty("wisky")
